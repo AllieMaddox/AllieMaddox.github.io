@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Millie's Chore Chart</title>
+<!-- Change app-version on every update so open pages show the "New version" banner -->
+<meta name="app-version" content="2026-11-22-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -158,6 +160,18 @@
   }
   .p-amount { font-size: 2.4rem; font-weight: 800; color: var(--green-dark); line-height: 1.1; }
   .p-sub { color: var(--muted); }
+  .backup { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 14px 16px; text-align: center; }
+  .backup p { margin: 0 0 12px; color: var(--muted); }
+  .b-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-backup { background: var(--purple); color: #fff; }
+  .btn-restore { background: #f3edff; color: var(--purple); }
+
+  .banner {
+    position: sticky; top: 0; z-index: 25; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
+    background: var(--ink); color: #fff; padding: 10px 16px; font-weight: 700; text-align: center;
+  }
+  .banner.warn { background: #b45309; }
+  .banner button { background: var(--yellow); color: var(--ink); border: 0; border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 800; cursor: pointer; }
   .hidden { display: none; }
 </style>
 </head>
@@ -191,6 +205,16 @@
     <div class="p-amount" id="potential">$0.00</div>
     <div class="p-sub" id="potentialSub"></div>
   </section>
+
+  <h2>Backup</h2>
+  <section class="backup">
+    <p>Your chart is saved on this phone. Save a backup now and then, and before clearing browsing data.</p>
+    <div class="b-btns">
+      <button class="btn btn-backup" id="backupBtn">💾 Save backup</button>
+      <button class="btn btn-restore" id="restoreBtn">📂 Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept=".json,application/json,text/plain" class="hidden">
+  </section>
 </div>
 
 <div class="sheet-bg hidden" id="sheet">
@@ -203,6 +227,8 @@
     <button class="link" id="sheetClose">Not yet</button>
   </div>
 </div>
+
+<div class="banner hidden" id="banner"><span id="bannerMsg"></span><button id="bannerBtn" class="hidden"></button></div>
 
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
 
@@ -582,6 +608,90 @@
     var g = $('editor').querySelector('.row[data-id="' + id + '"] .grip');
     if (g) g.focus();
   });
+
+  // ---- Banner (storage warnings / update available) ----
+  function banner(msg, btnText, onBtn, warn) {
+    $('bannerMsg').textContent = msg;
+    $('bannerBtn').classList.toggle('hidden', !btnText);
+    $('bannerBtn').textContent = btnText || '';
+    $('bannerBtn').onclick = onBtn || null;
+    $('banner').classList.toggle('warn', !!warn);
+    $('banner').classList.remove('hidden');
+  }
+  // Move banner to the top of the page
+  document.body.insertBefore($('banner'), document.body.firstChild);
+
+  // Warn if this browser can't save (e.g. private browsing / blocked storage)
+  var canSave = (function () {
+    try { localStorage.setItem(KEY + '-test', '1'); var ok = localStorage.getItem(KEY + '-test') === '1'; localStorage.removeItem(KEY + '-test'); return ok; }
+    catch (e) { return false; }
+  })();
+  if (!canSave) banner('⚠️ This browser isn’t saving the chart. Turn off private browsing or open it in Safari/Chrome.', null, null, true);
+  // Ask the browser to keep our data (helps on some phones)
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+
+  // ---- Check for a newer version of this page ----
+  var VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+  var updateShown = false;
+  function checkForUpdate() {
+    if (updateShown || !window.fetch || location.protocol === 'file:') return;
+    fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (html) {
+        var m = html.match(/<meta name="app-version" content="([^"]+)"/);
+        if (m && m[1] !== VERSION) {
+          updateShown = true;
+          banner('✨ New version of the chore chart is ready!', 'Update', function () {
+            save();
+            location.replace(location.pathname + '?v=' + encodeURIComponent(m[1]));
+          });
+        }
+      })
+      .catch(function () {});
+  }
+  checkForUpdate();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkForUpdate(); });
+
+  // ---- Backup / restore ----
+  $('backupBtn').onclick = function () {
+    var data = JSON.stringify(state, null, 2);
+    var name = 'millie-chores-' + new Date().toISOString().slice(0, 10) + '.json';
+    try {
+      var file = new File([data], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+        navigator.share({ files: [file], title: 'Millie chore chart backup' }).catch(function () {});
+        return;
+      }
+    } catch (e) {}
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    toast('Backup saved 💾');
+  };
+  $('restoreBtn').onclick = function () { $('restoreFile').click(); };
+  $('restoreFile').onchange = function () {
+    var f = this.files && this.files[0];
+    this.value = '';
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try { data = JSON.parse(reader.result); } catch (e) { data = null; }
+      if (!data || !Array.isArray(data.chores) || !Array.isArray(data.earned) || !Array.isArray(data.payouts)) {
+        alert('That file isn’t a chore chart backup.');
+        return;
+      }
+      if (!confirm('Replace everything on this phone with this backup (' + data.chores.length + ' chores, ' +
+        money(data.earned.reduce(function (a, e) { return a + (e.price || 0); }, 0)) + ' owed)?')) return;
+      var before = state;
+      state = data;
+      save(); render();
+      toast('Backup restored ✅', function () { state = before; save(); render(); });
+    };
+    reader.readAsText(f);
+  };
 
   render();
 })();
