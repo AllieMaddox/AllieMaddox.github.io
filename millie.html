@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kids' Chore Chart</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-22-3">
+<meta name="app-version" content="2026-11-22-4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -287,15 +287,15 @@
   };
 
   var WHITAKER_CHORES = [
-    { id: 'w1', emoji: '🧸', name: 'Pick up toys', price: 0.10, steps: ['Put toys in the toy bin', 'Put stuffed animals on the bed', 'Put books on the shelf'] },
-    { id: 'w2', emoji: '🛏️', name: 'Help make bed', price: 0.10, steps: ['Pull up the blanket', 'Put the pillow at the top', 'Put stuffies on the bed'] },
-    { id: 'w3', emoji: '👕', name: 'Dirty clothes in hamper', price: 0.10, steps: ['Pick up clothes from the floor', 'Put them in the hamper'] },
-    { id: 'w4', emoji: '👟', name: 'Put shoes away', price: 0.10, steps: ['Find your shoes', 'Put them in the shoe spot'] },
-    { id: 'w5', emoji: '🧦', name: 'Match socks', price: 0.10, steps: ['Find two socks that look the same', 'Put them together', 'Make a sock pile'] },
-    { id: 'w6', emoji: '🍽️', name: 'Clear your plate', price: 0.10, steps: ['Carry your plate to the counter', 'Carry your cup', 'Throw your napkin in the trash'] },
-    { id: 'w7', emoji: '🥄', name: 'Napkins and spoons', price: 0.10, steps: ['Put a napkin at each seat', 'Put a spoon on each napkin'] },
-    { id: 'w8', emoji: '🧽', name: 'Wipe the table', price: 0.10, steps: ['Get a damp cloth', 'Wipe up crumbs and spills', 'Put the cloth in the sink'] },
-    { id: 'w9', emoji: '🪴', name: 'Water plants', price: 0.10, steps: ['Fill a small cup with water', 'Pour it slowly on the dirt', 'Put the cup back'] }
+    { id: 'w1', emoji: '🧸', name: 'Pick up toys', price: 0.40, steps: ['Put toys in the toy bin', 'Put stuffed animals on the bed', 'Put books on the shelf'] },
+    { id: 'w2', emoji: '🛏️', name: 'Help make bed', price: 0.40, steps: ['Pull up the blanket', 'Put the pillow at the top', 'Put stuffies on the bed'] },
+    { id: 'w3', emoji: '👕', name: 'Dirty clothes in hamper', price: 0.30, steps: ['Pick up clothes from the floor', 'Put them in the hamper'] },
+    { id: 'w4', emoji: '👟', name: 'Put shoes away', price: 0.30, steps: ['Find your shoes', 'Put them in the shoe spot'] },
+    { id: 'w5', emoji: '🧦', name: 'Match socks', price: 0.30, steps: ['Find two socks that look the same', 'Put them together', 'Make a sock pile'] },
+    { id: 'w6', emoji: '🍽️', name: 'Clear your plate', price: 0.30, steps: ['Carry your plate to the counter', 'Carry your cup', 'Throw your napkin in the trash'] },
+    { id: 'w7', emoji: '🥄', name: 'Napkins and spoons', price: 0.30, steps: ['Put a napkin at each seat', 'Put a spoon on each napkin'] },
+    { id: 'w8', emoji: '🧽', name: 'Wipe the table', price: 0.40, steps: ['Get a damp cloth', 'Wipe up crumbs and spills', 'Put the cloth in the sink'] },
+    { id: 'w9', emoji: '🪴', name: 'Water plants', price: 0.30, steps: ['Fill a small cup with water', 'Pour it slowly on the dirt', 'Put the cup back'] }
   ];
 
   // Older Millie-only data gets these one-time fixes before moving into the new format
@@ -343,7 +343,7 @@
     var root = raw && Array.isArray(raw.kids) && raw.kids.length ? raw : null;
     if (!root) {
       try { legacy = JSON.parse(localStorage.getItem(LEGACY_KEY)); } catch (e) {}
-      if (!(legacy && Array.isArray(legacy.chores))) legacy = { chores: clone(DEFAULT_CHORES), earned: [], payouts: [] };
+      if (!(legacy && Array.isArray(legacy.chores))) legacy = { chores: clone(DEFAULT_CHORES).filter(function (c) { return c.name !== 'Feed the pet'; }), earned: [], payouts: [] };
       legacyMigrate(legacy);
       root = { kids: [{ id: 'millie', name: 'Millie', chores: legacy.chores, earned: legacy.earned || [], payouts: legacy.payouts || [] }], current: 'millie' };
     }
@@ -352,6 +352,17 @@
         root.kids.push({ id: 'whitaker', name: 'Whitaker', chores: clone(WHITAKER_CHORES), earned: [], payouts: [] });
       }
       root.addedWhitaker = true;
+      root.whitakerPrices3 = true; // a brand-new Whitaker already has the $3 prices
+    }
+    // One-time update: raise Whitaker's starter prices so his menu totals $3.00.
+    // Only changes chores still at the old $0.10 starter price.
+    if (!root.whitakerPrices3) {
+      var w = root.kids.find(function (k) { return k.id === 'whitaker'; });
+      if (w) w.chores.forEach(function (c) {
+        var starter = WHITAKER_CHORES.find(function (d) { return d.id === c.id; });
+        if (starter && Math.abs(c.price - 0.10) < 0.001) c.price = starter.price;
+      });
+      root.whitakerPrices3 = true;
     }
     return root;
   }
