@@ -81,9 +81,13 @@
   .empty { padding: 18px; text-align: center; color: var(--muted); }
 
   .editor .row input { font: inherit; border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; min-width: 0; color: var(--ink); background: #fff; }
-  .editor .e-emoji { width: 52px; text-align: center; }
+  .editor .row { gap: 6px; padding: 10px; }
+  .editor .e-emoji { width: 44px; text-align: center; padding: 6px 2px; }
   .editor .e-name { flex: 1; }
-  .editor .e-price { width: 80px; }
+  .editor .e-price { width: 64px; }
+  .mv { display: flex; flex-direction: column; gap: 2px; flex: none; }
+  .mv button { background: #f3edff; color: var(--purple); border: 0; border-radius: 8px; width: 30px; height: 22px; cursor: pointer; font-size: .7rem; line-height: 1; padding: 0; }
+  .mv button:disabled { opacity: .3; cursor: default; }
   .btn-add { background: var(--purple); color: #fff; margin: 12px 14px; }
 
   .toast {
@@ -194,8 +198,11 @@
   }
 
   function renderEditor() {
-    $('editor').innerHTML = state.chores.map(function (c) {
+    var last = state.chores.length - 1;
+    $('editor').innerHTML = state.chores.map(function (c, i) {
       return '<div class="row" data-id="' + c.id + '">' +
+        '<div class="mv"><button data-up="' + c.id + '" title="Move up" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+        '<button data-down="' + c.id + '" title="Move down" aria-label="Move down"' + (i === last ? ' disabled' : '') + '>▼</button></div>' +
         '<input class="e-emoji" value="' + esc(c.emoji || '') + '" aria-label="Emoji">' +
         '<input class="e-name" value="' + esc(c.name) + '" aria-label="Chore name">' +
         '<input class="e-price" type="number" min="0" step="0.25" inputmode="decimal" value="' + c.price.toFixed(2) + '" aria-label="Price">' +
@@ -294,6 +301,18 @@
       var inputs = $('editor').querySelectorAll('.e-name');
       var last = inputs[inputs.length - 1];
       if (last) { last.focus(); last.select(); }
+      return;
+    }
+    var mv = ev.target.dataset.up || ev.target.dataset.down;
+    if (mv) {
+      var from = state.chores.findIndex(function (c) { return c.id === mv; });
+      var to = from + (ev.target.dataset.up ? -1 : 1);
+      if (from < 0 || to < 0 || to >= state.chores.length) return;
+      var moved = state.chores.splice(from, 1)[0];
+      state.chores.splice(to, 0, moved);
+      save(); render();
+      var btn = $('editor').querySelector('[data-' + (ev.target.dataset.up ? 'up' : 'down') + '="' + mv + '"]');
+      if (btn && !btn.disabled) btn.focus();
       return;
     }
     var id = ev.target.dataset.del;
