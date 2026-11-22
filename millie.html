@@ -152,6 +152,12 @@
   .btn-done.ready { animation: pulse 1s ease infinite; }
   @keyframes pulse { 50% { transform: scale(1.04); } }
   .sheet .link { margin-top: 10px; padding: 8px; }
+  .potential {
+    background: var(--card); border: 2px dashed var(--yellow); border-radius: 18px; box-shadow: var(--shadow);
+    padding: 16px; text-align: center;
+  }
+  .p-amount { font-size: 2.4rem; font-weight: 800; color: var(--green-dark); line-height: 1.1; }
+  .p-sub { color: var(--muted); }
   .hidden { display: none; }
 </style>
 </head>
@@ -179,6 +185,12 @@
 
   <h2>Paydays</h2>
   <div class="list" id="paid"></div>
+
+  <h2>Potential Earnings</h2>
+  <section class="potential">
+    <div class="p-amount" id="potential">$0.00</div>
+    <div class="p-sub" id="potentialSub"></div>
+  </section>
 </div>
 
 <div class="sheet-bg hidden" id="sheet">
@@ -294,6 +306,13 @@
       return '<div class="row"><span>💵</span><div class="what">Paid ' + p.count + ' chore' + (p.count === 1 ? '' : 's') +
         '<small>' + when(p.at) + '</small></div><span class="amt">' + money(p.amount) + '</span></div>';
     }).join('') || '<div class="empty">No paydays yet.</div>';
+
+    var pot = state.chores.reduce(function (a, c) { return a + (c.price || 0); }, 0);
+    var nc = state.chores.length;
+    $('potential').textContent = money(pot);
+    $('potentialSub').textContent = nc
+      ? 'if Millie does all ' + nc + ' chore' + (nc === 1 ? '' : 's') + ' on the menu once'
+      : 'Add chores to the menu to see what Millie could earn';
 
     $('editToggle').textContent = editing ? '✅ Done editing' : '✏️ Edit menu';
     $('editor').classList.toggle('hidden', !editing);
