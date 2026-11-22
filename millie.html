@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Millie's Chore Chart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff7ef;
+    --card: #ffffff;
+    --ink: #3b2a4a;
+    --muted: #8a7a96;
+    --pink: #ff6fa5;
+    --purple: #8b5cf6;
+    --green: #22c55e;
+    --green-dark: #15803d;
+    --yellow: #ffd166;
+    --line: #f1e4f5;
+    --shadow: 0 6px 18px rgba(139, 92, 246, .12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Baloo 2", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 60px; }
+  header { text-align: center; margin: 8px 0 16px; }
+  h1 { font-size: 2.2rem; margin: 0; color: var(--purple); line-height: 1.1; }
+  h1 span { color: var(--pink); }
+  .sub { color: var(--muted); margin: 4px 0 0; }
+
+  .bank {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    color: #fff;
+    border-radius: 24px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .bank .label { font-size: 1.1rem; opacity: .95; }
+  .bank .amount { font-size: 3.6rem; font-weight: 800; line-height: 1; margin: 6px 0 10px; }
+  .bank .amount.bump { animation: bump .45s ease; }
+  @keyframes bump { 40% { transform: scale(1.15); } }
+  .bank .count { opacity: .9; margin-bottom: 14px; }
+  .btn {
+    font: inherit; font-weight: 700; border: 0; border-radius: 999px;
+    padding: 10px 18px; cursor: pointer; font-size: 1rem;
+  }
+  .btn-pay { background: var(--yellow); color: var(--ink); font-size: 1.1rem; padding: 12px 26px; }
+  .btn-pay:disabled { opacity: .5; cursor: not-allowed; }
+
+  h2 { font-size: 1.4rem; margin: 28px 0 10px; display: flex; justify-content: space-between; align-items: center; }
+  .link { background: none; border: 0; color: var(--purple); font: inherit; font-weight: 700; cursor: pointer; font-size: 1rem; }
+
+  .menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .chore {
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px;
+    padding: 14px 10px; text-align: center; cursor: pointer; box-shadow: var(--shadow);
+    font: inherit; color: inherit; transition: transform .1s, border-color .2s;
+  }
+  .chore:active { transform: scale(.96); }
+  .chore:hover { border-color: var(--pink); }
+  .chore .emoji { font-size: 2rem; display: block; }
+  .chore .name { font-weight: 700; display: block; line-height: 1.2; margin: 4px 0; }
+  .chore .price { display: inline-block; background: #e9fbe9; color: var(--green-dark); font-weight: 800; border-radius: 999px; padding: 2px 12px; }
+
+  .list { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .what { flex: 1; min-width: 0; }
+  .row .what small { color: var(--muted); display: block; }
+  .row .amt { font-weight: 800; color: var(--green-dark); }
+  .x { background: #fdecef; color: #c2185b; border: 0; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: 800; flex: none; }
+  .empty { padding: 18px; text-align: center; color: var(--muted); }
+
+  .editor .row input { font: inherit; border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; min-width: 0; color: var(--ink); background: #fff; }
+  .editor .e-emoji { width: 52px; text-align: center; }
+  .editor .e-name { flex: 1; }
+  .editor .e-price { width: 80px; }
+  .btn-add { background: var(--purple); color: #fff; margin: 12px 14px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px);
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 700;
+    transition: transform .3s; z-index: 10; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast button { background: var(--yellow); color: var(--ink); border: 0; border-radius: 999px; padding: 4px 12px; font: inherit; font-weight: 700; cursor: pointer; }
+
+  .coin { position: fixed; font-size: 2rem; pointer-events: none; z-index: 20; animation: fly .9s ease-in forwards; }
+  @keyframes fly { to { transform: translateY(-60vh) scale(.5); opacity: 0; } }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Millie's <span>Chore Chart</span></h1>
+    <p class="sub">Pick a chore, finish it, and watch your bank grow!</p>
+  </header>
+
+  <section class="bank">
+    <div class="label">💰 We owe Millie</div>
+    <div class="amount" id="owed">$0.00</div>
+    <div class="count" id="count">No chores yet this week</div>
+    <button class="btn btn-pay" id="payBtn">Pay Millie &amp; start new week</button>
+  </section>
+
+  <h2>Chore Menu <button class="link" id="editToggle">✏️ Edit menu</button></h2>
+  <div class="menu" id="menu"></div>
+
+  <div class="list editor hidden" id="editor"></div>
+
+  <h2>This Week</h2>
+  <div class="list" id="week"></div>
+
+  <h2>Paydays</h2>
+  <div class="list" id="paid"></div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+<script>
+(function () {
+  var KEY = 'millie-chore-chart-v1';
+  var DEFAULT_CHORES = [
+    { id: 'c1', emoji: '🛏️', name: 'Make bed', price: 0.50 },
+    { id: 'c2', emoji: '🧸', name: 'Clean up toys', price: 0.50 },
+    { id: 'c3', emoji: '🍽️', name: 'Set the table', price: 0.50 },
+    { id: 'c4', emoji: '🧺', name: 'Put away laundry', price: 1.00 },
+    { id: 'c5', emoji: '🐶', name: 'Feed the pet', price: 0.50 },
+    { id: 'c6', emoji: '🗑️', name: 'Take out trash', price: 1.00 },
+    { id: 'c7', emoji: '🪴', name: 'Water plants', price: 0.50 },
+    { id: 'c8', emoji: '🧹', name: 'Sweep the floor', price: 1.00 },
+    { id: 'c9', emoji: '🚗', name: 'Help wash the car', price: 2.00 },
+    { id: 'c10', emoji: '🧽', name: 'Wipe the counters', price: 0.75 }
+  ];
+
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.chores) return s;
+    } catch (e) {}
+    return { chores: DEFAULT_CHORES.slice(), earned: [], payouts: [] };
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = load();
+  var editing = false;
+  var $ = function (id) { return document.getElementById(id); };
+  var money = function (n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); };
+  var uid = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
+  var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+  var when = function (t) {
+    return new Date(t).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  };
+  var total = function () { return state.earned.reduce(function (a, e) { return a + e.price; }, 0); };
+
+  function render() {
+    var t = total();
+    $('owed').textContent = money(t);
+    var n = state.earned.length;
+    $('count').textContent = n ? n + ' chore' + (n === 1 ? '' : 's') + ' done this week 🎉' : 'No chores yet this week';
+    $('payBtn').disabled = n === 0;
+
+    $('menu').innerHTML = state.chores.map(function (c) {
+      return '<button class="chore" data-id="' + c.id + '"><span class="emoji">' + esc(c.emoji || '⭐') +
+        '</span><span class="name">' + esc(c.name) + '</span><span class="price">' + money(c.price) + '</span></button>';
+    }).join('') || '<div class="empty">No chores on the menu. Tap “Edit menu” to add some.</div>';
+
+    $('week').innerHTML = state.earned.slice().reverse().map(function (e) {
+      return '<div class="row"><span>' + esc(e.emoji || '⭐') + '</span><div class="what">' + esc(e.name) +
+        '<small>' + when(e.at) + '</small></div><span class="amt">+' + money(e.price) +
+        '</span><button class="x" title="Remove" data-earned="' + e.id + '">✕</button></div>';
+    }).join('') || '<div class="empty">Nothing yet — go pick a chore!</div>';
+
+    $('paid').innerHTML = state.payouts.slice().reverse().map(function (p) {
+      return '<div class="row"><span>💵</span><div class="what">Paid ' + p.count + ' chore' + (p.count === 1 ? '' : 's') +
+        '<small>' + when(p.at) + '</small></div><span class="amt">' + money(p.amount) + '</span></div>';
+    }).join('') || '<div class="empty">No paydays yet.</div>';
+
+    $('editToggle').textContent = editing ? '✅ Done editing' : '✏️ Edit menu';
+    $('editor').classList.toggle('hidden', !editing);
+    if (editing) renderEditor();
+  }
+
+  function renderEditor() {
+    $('editor').innerHTML = state.chores.map(function (c) {
+      return '<div class="row" data-id="' + c.id + '">' +
+        '<input class="e-emoji" value="' + esc(c.emoji || '') + '" aria-label="Emoji">' +
+        '<input class="e-name" value="' + esc(c.name) + '" aria-label="Chore name">' +
+        '<input class="e-price" type="number" min="0" step="0.25" inputmode="decimal" value="' + c.price.toFixed(2) + '" aria-label="Price">' +
+        '<button class="x" title="Delete chore" data-del="' + c.id + '">✕</button></div>';
+    }).join('') + '<button class="btn btn-add" id="addChore">+ Add a chore</button>';
+  }
+
+  var toastTimer, undoFn;
+  function toast(msg, undo) {
+    $('toastMsg').textContent = msg;
+    undoFn = undo;
+    $('toastUndo').style.display = undo ? '' : 'none';
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('toast').classList.remove('show'); }, 4000);
+  }
+  $('toastUndo').onclick = function () {
+    if (undoFn) undoFn();
+    undoFn = null;
+    $('toast').classList.remove('show');
+  };
+
+  function coin(x, y) {
+    var el = document.createElement('div');
+    el.className = 'coin'; el.textContent = '🪙';
+    el.style.left = (x - 16) + 'px'; el.style.top = (y - 16) + 'px';
+    document.body.appendChild(el);
+    setTimeout(function () { el.remove(); }, 1000);
+  }
+
+  $('menu').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.chore');
+    if (!b) return;
+    var c = state.chores.find(function (x) { return x.id === b.dataset.id; });
+    if (!c) return;
+    var entry = { id: uid(), name: c.name, emoji: c.emoji, price: c.price, at: Date.now() };
+    state.earned.push(entry);
+    save(); render();
+    var r = b.getBoundingClientRect();
+    coin(r.left + r.width / 2, r.top + r.height / 2);
+    var amt = $('owed'); amt.classList.remove('bump'); void amt.offsetWidth; amt.classList.add('bump');
+    toast('Nice job! +' + money(c.price) + ' for ' + c.name, function () {
+      state.earned = state.earned.filter(function (e) { return e.id !== entry.id; });
+      save(); render();
+    });
+  });
+
+  $('week').addEventListener('click', function (ev) {
+    var id = ev.target.dataset.earned;
+    if (!id) return;
+    var idx = state.earned.findIndex(function (e) { return e.id === id; });
+    if (idx < 0) return;
+    var removed = state.earned.splice(idx, 1)[0];
+    save(); render();
+    toast('Removed ' + removed.name, function () {
+      state.earned.splice(idx, 0, removed);
+      save(); render();
+    });
+  });
+
+  $('payBtn').onclick = function () {
+    var t = total();
+    if (!state.earned.length) return;
+    if (!confirm('Pay Millie ' + money(t) + ' and start a new week?')) return;
+    var payout = { id: uid(), amount: t, count: state.earned.length, at: Date.now(), items: state.earned };
+    state.payouts.push(payout);
+    state.earned = [];
+    save(); render();
+    toast('Paid ' + money(t) + '! 🎉 New week started.', function () {
+      state.earned = payout.items;
+      state.payouts = state.payouts.filter(function (p) { return p.id !== payout.id; });
+      save(); render();
+    });
+  };
+
+  $('editToggle').onclick = function () { editing = !editing; render(); };
+
+  $('editor').addEventListener('input', function (ev) {
+    var row = ev.target.closest('.row');
+    if (!row) return;
+    var c = state.chores.find(function (x) { return x.id === row.dataset.id; });
+    if (!c) return;
+    if (ev.target.classList.contains('e-emoji')) c.emoji = ev.target.value;
+    if (ev.target.classList.contains('e-name')) c.name = ev.target.value;
+    if (ev.target.classList.contains('e-price')) c.price = Math.max(0, parseFloat(ev.target.value) || 0);
+    save();
+    // Update the menu without rebuilding the editor (keeps focus while typing)
+    var keep = editing; editing = false; render(); editing = keep;
+    $('editToggle').textContent = '✅ Done editing'; $('editor').classList.remove('hidden');
+  });
+
+  $('editor').addEventListener('click', function (ev) {
+    if (ev.target.id === 'addChore') {
+      state.chores.push({ id: uid(), emoji: '⭐', name: 'New chore', price: 0.50 });
+      save(); render();
+      var inputs = $('editor').querySelectorAll('.e-name');
+      var last = inputs[inputs.length - 1];
+      if (last) { last.focus(); last.select(); }
+      return;
+    }
+    var id = ev.target.dataset.del;
+    if (!id) return;
+    var idx = state.chores.findIndex(function (c) { return c.id === id; });
+    var removed = state.chores.splice(idx, 1)[0];
+    save(); render();
+    toast('Deleted ' + removed.name, function () {
+      state.chores.splice(idx, 0, removed);
+      save(); render();
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
