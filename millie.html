@@ -209,6 +209,19 @@
     { id: 'c9', emoji: '🚗', name: 'Help wash the car', price: 2.00 },
     { id: 'c10', emoji: '🧽', name: 'Wipe the counters', price: 0.75 }
   ];
+  var DEFAULT_STEPS = {
+    'make bed': ['Pull the sheet up flat', 'Pull the blanket up to the pillow', 'Smooth out the wrinkles', 'Put pillows at the top', 'Line up stuffed animals'],
+    'clean up toys': ['Pick up toys from the floor', 'Put each toy in its bin or spot', 'Put books back on the shelf', 'Check under the bed and couch'],
+    'set the table': ['Put a placemat at each seat', 'Put a plate on each placemat', 'Fork on the left, knife and spoon on the right', 'Fold a napkin by each plate', 'Put a cup at each seat'],
+    'put away laundry': ['Sort clothes into piles (shirts, pants, socks, PJs)', 'Match up socks', 'Fold shirts and pants', 'Put each pile in the right drawer', 'Hang up anything that goes on a hanger'],
+    'feed the pet': ['Scoop the right amount of food into the bowl', 'Rinse the water bowl', 'Fill it with fresh water', 'Put the food bag away', 'Wipe up any spills'],
+    'take out trash': ['Check the bathroom and bedroom trash cans', 'Empty them into the big trash bag', 'Tie the big bag closed', 'Carry it to the outside bin', 'Put a new bag in the kitchen can'],
+    'water plants': ['Fill the watering can', 'Feel the soil — water it if it’s dry', 'Pour slowly until the soil is wet', 'Wipe up any drips', 'Put the watering can back'],
+    'sweep the floor': ['Move chairs out of the way', 'Sweep from the edges to the middle', 'Sweep the pile into the dustpan', 'Dump it in the trash', 'Put chairs and broom back'],
+    'help wash the car': ['Fill the bucket with soapy water', 'Rinse the car with the hose', 'Scrub with the sponge, top to bottom', 'Rinse off all the soap', 'Dry it with a towel'],
+    'wipe the counters': ['Clear things off the counter', 'Spray the counter', 'Wipe crumbs into your hand or the sink', 'Wipe it dry', 'Put things back neatly']
+  };
+  DEFAULT_CHORES.forEach(function (c) { c.steps = DEFAULT_STEPS[c.name.toLowerCase()].slice(); });
   var BATHROOM = {
     id: 'bath', emoji: '🛁', name: 'Clean bathroom', price: 1.00,
     steps: ['Wipe counters', 'Put toothbrushes away', 'Pick up floor', 'Put toys in basket']
@@ -232,6 +245,15 @@
     if (!bath) state.chores.unshift(JSON.parse(JSON.stringify(BATHROOM)));
     else if (!bath.steps || !bath.steps.length) bath.steps = BATHROOM.steps.slice();
     state.addedBathroom = true;
+    save();
+  }
+  // One-time update: fill in steps for starter chores that don't have any
+  if (!state.addedDefaultSteps) {
+    state.chores.forEach(function (c) {
+      var d = DEFAULT_STEPS[String(c.name).trim().toLowerCase()];
+      if (d && !(c.steps && c.steps.length)) c.steps = d.slice();
+    });
+    state.addedDefaultSteps = true;
     save();
   }
   var openSteps = {};
