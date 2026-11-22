@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kids' Chore Chart</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-22-4">
+<meta name="app-version" content="2026-11-22-5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -287,15 +287,16 @@
   };
 
   var WHITAKER_CHORES = [
-    { id: 'w1', emoji: '🧸', name: 'Pick up toys', price: 0.40, steps: ['Put toys in the toy bin', 'Put stuffed animals on the bed', 'Put books on the shelf'] },
-    { id: 'w2', emoji: '🛏️', name: 'Help make bed', price: 0.40, steps: ['Pull up the blanket', 'Put the pillow at the top', 'Put stuffies on the bed'] },
-    { id: 'w3', emoji: '👕', name: 'Dirty clothes in hamper', price: 0.30, steps: ['Pick up clothes from the floor', 'Put them in the hamper'] },
-    { id: 'w4', emoji: '👟', name: 'Put shoes away', price: 0.30, steps: ['Find your shoes', 'Put them in the shoe spot'] },
-    { id: 'w5', emoji: '🧦', name: 'Match socks', price: 0.30, steps: ['Find two socks that look the same', 'Put them together', 'Make a sock pile'] },
-    { id: 'w6', emoji: '🍽️', name: 'Clear your plate', price: 0.30, steps: ['Carry your plate to the counter', 'Carry your cup', 'Throw your napkin in the trash'] },
-    { id: 'w7', emoji: '🥄', name: 'Napkins and spoons', price: 0.30, steps: ['Put a napkin at each seat', 'Put a spoon on each napkin'] },
-    { id: 'w8', emoji: '🧽', name: 'Wipe the table', price: 0.40, steps: ['Get a damp cloth', 'Wipe up crumbs and spills', 'Put the cloth in the sink'] },
-    { id: 'w9', emoji: '🪴', name: 'Water plants', price: 0.30, steps: ['Fill a small cup with water', 'Pour it slowly on the dirt', 'Put the cup back'] }
+    { id: 'w1', emoji: '🧸', name: 'Pick up toys', price: 0.10, steps: ['Put toys in the toy bin', 'Put stuffed animals on the bed', 'Put books on the shelf'] },
+    { id: 'w2', emoji: '🛏️', name: 'Help make bed', price: 0.10, steps: ['Pull up the blanket', 'Put the pillow at the top', 'Put stuffies on the bed'] },
+    { id: 'w3', emoji: '👕', name: 'Dirty clothes in hamper', price: 0.10, steps: ['Pick up clothes from the floor', 'Put them in the hamper'] },
+    { id: 'w4', emoji: '👟', name: 'Put shoes away', price: 0.10, steps: ['Find your shoes', 'Put them in the shoe spot'] },
+    { id: 'w5', emoji: '🧦', name: 'Match socks', price: 0.10, steps: ['Find two socks that look the same', 'Put them together', 'Make a sock pile'] },
+    { id: 'w6', emoji: '🍽️', name: 'Clear your plate', price: 0.10, steps: ['Carry your plate to the counter', 'Carry your cup', 'Throw your napkin in the trash'] },
+    { id: 'w7', emoji: '🥄', name: 'Napkins and spoons', price: 0.10, steps: ['Put a napkin at each seat', 'Put a spoon on each napkin'] },
+    { id: 'w8', emoji: '🧽', name: 'Wipe the table', price: 0.10, steps: ['Get a damp cloth', 'Wipe up crumbs and spills', 'Put the cloth in the sink'] },
+    { id: 'w9', emoji: '🪴', name: 'Water plants', price: 0.10, steps: ['Fill a small cup with water', 'Pour it slowly on the dirt', 'Put the cup back'] },
+    { id: 'w10', emoji: '🛁', name: 'Bath toys in basket', price: 0.10, steps: ['Squeeze the water out of each toy', 'Put the toys in the basket', 'Hang the basket up to dry'] }
   ];
 
   // Older Millie-only data gets these one-time fixes before moving into the new format
@@ -352,17 +353,22 @@
         root.kids.push({ id: 'whitaker', name: 'Whitaker', chores: clone(WHITAKER_CHORES), earned: [], payouts: [] });
       }
       root.addedWhitaker = true;
-      root.whitakerPrices3 = true; // a brand-new Whitaker already has the $3 prices
+      root.whitakerDollar = true; // a brand-new Whitaker already has the $1/week menu
     }
-    // One-time update: raise Whitaker's starter prices so his menu totals $3.00.
-    // Only changes chores still at the old $0.10 starter price.
-    if (!root.whitakerPrices3) {
+    // One-time update: Whitaker's menu is $1.00/week — every chore $0.10, plus a 10th chore.
+    // Undoes the short-lived $3 prices ($0.30/$0.40 on starter chores); custom prices are kept.
+    if (!root.whitakerDollar) {
       var w = root.kids.find(function (k) { return k.id === 'whitaker'; });
-      if (w) w.chores.forEach(function (c) {
-        var starter = WHITAKER_CHORES.find(function (d) { return d.id === c.id; });
-        if (starter && Math.abs(c.price - 0.10) < 0.001) c.price = starter.price;
-      });
-      root.whitakerPrices3 = true;
+      var THREE = { w1: 0.40, w2: 0.40, w3: 0.30, w4: 0.30, w5: 0.30, w6: 0.30, w7: 0.30, w8: 0.40, w9: 0.30 };
+      if (w) {
+        w.chores.forEach(function (c) {
+          if (root.whitakerPrices3 && THREE[c.id] != null && Math.abs(c.price - THREE[c.id]) < 0.001) c.price = 0.10;
+        });
+        if (!w.chores.some(function (c) { return c.id === 'w10' || /bath toys/i.test(c.name); })) {
+          w.chores.push(clone(WHITAKER_CHORES.find(function (d) { return d.id === 'w10'; })));
+        }
+      }
+      root.whitakerDollar = true;
     }
     return root;
   }
