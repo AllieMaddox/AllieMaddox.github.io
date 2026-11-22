@@ -106,6 +106,52 @@
 
   .coin { position: fixed; font-size: 2rem; pointer-events: none; z-index: 20; animation: fly .9s ease-in forwards; }
   @keyframes fly { to { transform: translateY(-60vh) scale(.5); opacity: 0; } }
+  .chore .nsteps { display: block; color: var(--muted); font-size: .85rem; margin-top: 4px; }
+
+  .editor .row { flex-wrap: wrap; }
+  .steps-toggle {
+    flex-basis: 100%; text-align: left; background: none; border: 0; padding: 0 0 0 36px;
+    color: var(--purple); font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
+  }
+  .e-steps {
+    flex-basis: 100%; margin-left: 36px; width: calc(100% - 36px); min-height: 110px; resize: vertical;
+    font: inherit; font-size: 1rem; border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--ink); background: #fff;
+  }
+  .e-steps-hint { flex-basis: 100%; margin-left: 36px; color: var(--muted); font-size: .85rem; margin-top: -2px; }
+
+  .sheet-bg {
+    position: fixed; inset: 0; background: rgba(59, 42, 74, .45); z-index: 30;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet {
+    background: var(--bg); width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+    border-radius: 26px 26px 0 0; padding: 22px 18px calc(20px + env(safe-area-inset-bottom));
+    text-align: center; animation: up .25s ease;
+  }
+  @media (min-width: 560px) { .sheet-bg { align-items: center; } .sheet { border-radius: 26px; } }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  .s-emoji { font-size: 3.2rem; line-height: 1; }
+  .sheet h3 { font-size: 1.7rem; margin: 6px 0 4px; color: var(--purple); line-height: 1.15; }
+  .s-price { display: inline-block; background: #e9fbe9; color: var(--green-dark); font-weight: 800; border-radius: 999px; padding: 2px 14px; font-size: 1.1rem; }
+  .s-label { text-align: left; font-weight: 700; margin: 18px 4px 8px; display: flex; justify-content: space-between; }
+  .s-label span { color: var(--muted); font-weight: 500; }
+  .steps { list-style: none; margin: 0; padding: 0; text-align: left; }
+  .step {
+    width: 100%; display: flex; align-items: center; gap: 12px; background: var(--card); border: 2px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; font: inherit; font-size: 1.1rem; color: var(--ink); cursor: pointer; text-align: left;
+  }
+  .step .box {
+    flex: none; width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--purple);
+    display: grid; place-items: center; color: #fff; font-weight: 800;
+  }
+  .step.checked { border-color: var(--green); background: #f0fdf4; }
+  .step.checked .box { background: var(--green); border-color: var(--green); }
+  .step.checked .txt { text-decoration: line-through; color: var(--muted); }
+  .no-steps { color: var(--muted); margin: 16px 0 4px; }
+  .btn-done { background: var(--green); color: #fff; width: 100%; font-size: 1.2rem; padding: 14px; margin-top: 14px; }
+  .btn-done.ready { animation: pulse 1s ease infinite; }
+  @keyframes pulse { 50% { transform: scale(1.04); } }
+  .sheet .link { margin-top: 10px; padding: 8px; }
   .hidden { display: none; }
 </style>
 </head>
@@ -113,7 +159,7 @@
 <div class="wrap">
   <header>
     <h1>Millie's <span>Chore Chart</span></h1>
-    <p class="sub">Pick a chore, finish it, and watch your bank grow!</p>
+    <p class="sub">Tap a chore to see what to do, then watch your bank grow!</p>
   </header>
 
   <section class="bank">
@@ -135,6 +181,17 @@
   <div class="list" id="paid"></div>
 </div>
 
+<div class="sheet-bg hidden" id="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="s-emoji" id="sheetEmoji"></div>
+    <h3 id="sheetTitle"></h3>
+    <div class="s-price" id="sheetPrice"></div>
+    <div id="sheetBody"></div>
+    <button class="btn btn-done" id="sheetDone"></button>
+    <button class="link" id="sheetClose">Not yet</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
 
 <script>
@@ -152,6 +209,10 @@
     { id: 'c9', emoji: '🚗', name: 'Help wash the car', price: 2.00 },
     { id: 'c10', emoji: '🧽', name: 'Wipe the counters', price: 0.75 }
   ];
+  var BATHROOM = {
+    id: 'bath', emoji: '🛁', name: 'Clean bathroom', price: 1.00,
+    steps: ['Wipe counters', 'Put toothbrushes away', 'Pick up floor', 'Put toys in basket']
+  };
 
   function load() {
     try {
@@ -165,11 +226,23 @@
   }
 
   var state = load();
+  // One-time update: add the bathroom chore with its steps
+  if (!state.addedBathroom) {
+    var bath = state.chores.find(function (c) { return /bathroom/i.test(c.name); });
+    if (!bath) state.chores.unshift(JSON.parse(JSON.stringify(BATHROOM)));
+    else if (!bath.steps || !bath.steps.length) bath.steps = BATHROOM.steps.slice();
+    state.addedBathroom = true;
+    save();
+  }
+  var openSteps = {};
   var editing = false;
   var $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); };
   var uid = function () { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
-  var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  };
+  var stepsOf = function (c) { return (c.steps || []).filter(function (x) { return x.trim(); }); };
   var when = function (t) {
     return new Date(t).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   };
@@ -184,7 +257,9 @@
 
     $('menu').innerHTML = state.chores.map(function (c) {
       return '<button class="chore" data-id="' + c.id + '"><span class="emoji">' + esc(c.emoji || '⭐') +
-        '</span><span class="name">' + esc(c.name) + '</span><span class="price">' + money(c.price) + '</span></button>';
+        '</span><span class="name">' + esc(c.name) + '</span><span class="price">' + money(c.price) + '</span>' +
+        (stepsOf(c).length ? '<span class="nsteps">📋 ' + stepsOf(c).length + ' step' + (stepsOf(c).length === 1 ? '' : 's') + '</span>' : '') +
+        '</button>';
     }).join('') || '<div class="empty">No chores on the menu. Tap “Edit menu” to add some.</div>';
 
     $('week').innerHTML = state.earned.slice().reverse().map(function (e) {
@@ -210,9 +285,69 @@
         '<input class="e-emoji" value="' + esc(c.emoji || '') + '" aria-label="Emoji">' +
         '<input class="e-name" value="' + esc(c.name) + '" aria-label="Chore name">' +
         '<input class="e-price" type="number" min="0" step="0.25" inputmode="decimal" value="' + c.price.toFixed(2) + '" aria-label="Price">' +
-        '<button class="x" title="Delete chore" data-del="' + c.id + '">✕</button></div>';
+        '<button class="x" title="Delete chore" data-del="' + c.id + '">✕</button>' +
+        stepsEditor(c) + '</div>';
     }).join('') + '<button class="btn btn-add" id="addChore">+ Add a chore</button>';
   }
+
+  function stepsLabel(c) {
+    var n = stepsOf(c).length;
+    return (openSteps[c.id] ? '▾ ' : '▸ ') + '📝 ' + (n ? 'Steps (' + n + ')' : 'Add steps');
+  }
+  function stepsEditor(c) {
+    var open = !!openSteps[c.id];
+    return '<button class="steps-toggle" data-steps="' + c.id + '" aria-expanded="' + open + '">' + stepsLabel(c) + '</button>' +
+      (open ? '<textarea class="e-steps" aria-label="Steps for ' + esc(c.name) + '" placeholder="One step per line, e.g.&#10;Wipe counters&#10;Put toothbrushes away">' +
+        esc((c.steps || []).join('\n')) + '</textarea><div class="e-steps-hint">One step per line.</div>' : '');
+  }
+
+  // ---- Chore details sheet ----
+  var sheetChore = null;
+  function openSheet(c) {
+    sheetChore = c;
+    var steps = stepsOf(c);
+    $('sheetEmoji').textContent = c.emoji || '⭐';
+    $('sheetTitle').textContent = c.name;
+    $('sheetPrice').textContent = money(c.price);
+    $('sheetBody').innerHTML = steps.length
+      ? '<div class="s-label">What to do <span id="sheetProgress"></span></div><ul class="steps">' +
+        steps.map(function (st) {
+          return '<li><button class="step" aria-pressed="false"><span class="box" aria-hidden="true">✓</span><span class="txt">' + esc(st) + '</span></button></li>';
+        }).join('') + '</ul>'
+      : '<p class="no-steps">No steps written for this chore yet.</p>';
+    $('sheetDone').textContent = '✅ I did it! +' + money(c.price);
+    updateProgress();
+    $('sheet').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    $('sheetDone').focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    $('sheet').classList.add('hidden');
+    document.body.style.overflow = '';
+    sheetChore = null;
+  }
+  function updateProgress() {
+    var all = $('sheetBody').querySelectorAll('.step'), done = $('sheetBody').querySelectorAll('.step.checked');
+    if ($('sheetProgress')) $('sheetProgress').textContent = done.length + ' of ' + all.length + ' done';
+    $('sheetDone').classList.toggle('ready', all.length > 0 && done.length === all.length);
+  }
+  $('sheetBody').addEventListener('click', function (ev) {
+    var st = ev.target.closest('.step');
+    if (!st) return;
+    st.classList.toggle('checked');
+    st.setAttribute('aria-pressed', st.classList.contains('checked'));
+    updateProgress();
+  });
+  $('sheetClose').onclick = closeSheet;
+  $('sheet').addEventListener('click', function (ev) { if (ev.target === $('sheet')) closeSheet(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && sheetChore) closeSheet(); });
+  $('sheetDone').onclick = function () {
+    var c = sheetChore;
+    if (!c) return;
+    var r = $('sheetDone').getBoundingClientRect();
+    closeSheet();
+    earn(c, r.left + r.width / 2, r.top);
+  };
 
   var toastTimer, undoFn;
   function toast(msg, undo) {
@@ -241,18 +376,20 @@
     var b = ev.target.closest('.chore');
     if (!b) return;
     var c = state.chores.find(function (x) { return x.id === b.dataset.id; });
-    if (!c) return;
+    if (c) openSheet(c);
+  });
+
+  function earn(c, x, y) {
     var entry = { id: uid(), name: c.name, emoji: c.emoji, price: c.price, at: Date.now() };
     state.earned.push(entry);
     save(); render();
-    var r = b.getBoundingClientRect();
-    coin(r.left + r.width / 2, r.top + r.height / 2);
+    coin(x, y);
     var amt = $('owed'); amt.classList.remove('bump'); void amt.offsetWidth; amt.classList.add('bump');
     toast('Nice job! +' + money(c.price) + ' for ' + c.name, function () {
       state.earned = state.earned.filter(function (e) { return e.id !== entry.id; });
       save(); render();
     });
-  });
+  }
 
   $('week').addEventListener('click', function (ev) {
     var id = ev.target.dataset.earned;
@@ -292,6 +429,10 @@
     if (ev.target.classList.contains('e-emoji')) c.emoji = ev.target.value;
     if (ev.target.classList.contains('e-name')) c.name = ev.target.value;
     if (ev.target.classList.contains('e-price')) c.price = Math.max(0, parseFloat(ev.target.value) || 0);
+    if (ev.target.classList.contains('e-steps')) {
+      c.steps = ev.target.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+      row.querySelector('.steps-toggle').textContent = stepsLabel(c);
+    }
     save();
     // Update the menu without rebuilding the editor (keeps focus while typing)
     var keep = editing; editing = false; render(); editing = keep;
@@ -305,6 +446,15 @@
       var inputs = $('editor').querySelectorAll('.e-name');
       var last = inputs[inputs.length - 1];
       if (last) { last.focus(); last.select(); }
+      return;
+    }
+    var tog = ev.target.closest('.steps-toggle');
+    if (tog) {
+      var sid = tog.dataset.steps;
+      openSteps[sid] = !openSteps[sid];
+      render();
+      var ta = $('editor').querySelector('.row[data-id="' + sid + '"] .e-steps');
+      if (ta) ta.focus();
       return;
     }
     var id = ev.target.dataset.del;
