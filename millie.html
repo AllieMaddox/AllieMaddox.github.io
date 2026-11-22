@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Millie's Chore Chart</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-22-1">
+<meta name="app-version" content="2026-11-22-2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -292,6 +292,28 @@
       if (d && !(c.steps && c.steps.length)) c.steps = d.slice();
     });
     state.addedDefaultSteps = true;
+    save();
+  }
+  // One-time update: renamed chores still had the old chore's emoji and steps.
+  // Only fix a chore whose steps are still an unchanged starter list.
+  if (!state.fixedRenamedChores) {
+    var FIXES = {
+      'clean up playroom': ['🧸', ['Pick up toys from the floor', 'Put each toy in its bin or spot', 'Put books back on the shelf', 'Put art supplies and games away', 'Check under the furniture for anything you missed']],
+      'clean up living room': ['🛋️', ['Pick up toys and put them where they go', 'Fold the blankets', 'Put the pillows back on the couch', 'Take cups and dishes to the kitchen', 'Throw away any trash']],
+      'help with dishes': ['🧼', ['Bring your dishes to the sink', 'Scrape food into the trash', 'Rinse each dish with water', 'Put dishes in the dishwasher or hand them to a grown-up', 'Leave sharp knives for a grown-up']],
+      'help with dinner': ['🥕', ['Wash your hands', 'Help get out the food and tools', 'Wash the fruits and veggies', 'Measure and stir with a grown-up', 'Help clean up and put things away']]
+    };
+    var starterLists = Object.keys(DEFAULT_STEPS).map(function (k) { return JSON.stringify(DEFAULT_STEPS[k]); });
+    var starterEmoji = DEFAULT_CHORES.map(function (c) { return c.emoji; });
+    state.chores.forEach(function (c) {
+      var fix = FIXES[String(c.name).trim().toLowerCase()];
+      if (!fix) return;
+      var stepsAreStarter = !(c.steps && c.steps.length) || starterLists.indexOf(JSON.stringify(c.steps)) >= 0;
+      if (!stepsAreStarter) return;
+      c.steps = fix[1].slice();
+      if (!c.emoji || starterEmoji.indexOf(c.emoji) >= 0) c.emoji = fix[0];
+    });
+    state.fixedRenamedChores = true;
     save();
   }
   var openSteps = {};
