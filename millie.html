@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kids' Chore Chart</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-22-5">
+<meta name="app-version" content="2026-11-22-6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -231,6 +231,7 @@
       <button class="btn btn-backup" id="backupBtn">💾 Save backup</button>
       <button class="btn btn-restore" id="restoreBtn">📂 Restore backup</button>
     </div>
+    <button class="link" id="recoverBtn" style="margin-top:10px">🔄 Recover Millie’s chart</button>
     <input type="file" id="restoreFile" accept=".json,application/json,text/plain" class="hidden">
   </section>
 </div>
@@ -782,6 +783,41 @@
     toast('Backup saved 💾');
   };
   $('restoreBtn').onclick = function () { $('restoreFile').click(); };
+
+  // ---- Recover Millie's chart (no file needed) ----
+  // Copy of the backup sent on Nov 22 (11 chores with her prices); the chore fixes are applied on recovery.
+  var MILLIE_NOV22 = {"chores":[{"id":"bath","emoji":"🛁","name":"Clean bathroom","price":0.5,"steps":["Wipe counters","Put toothbrushes away","Pick up floor","Put toys in basket"]},{"id":"c1","emoji":"🛏️","name":"Make bed","price":0.1,"steps":["Pull the sheet up flat","Pull the blanket up to the pillow","Smooth out the wrinkles","Put pillows at the top","Line up stuffed animals"]},{"id":"c2","emoji":"🧸","name":"Clean up playroom","price":0.2,"steps":["Pick up toys from the floor","Put each toy in its bin or spot","Put books back on the shelf","Check under the bed and couch"]},{"id":"c3","emoji":"🍽️","name":"Set the table","price":0.1,"steps":["Put a placemat at each seat","Put a plate on each placemat","Fork on the left, knife and spoon on the right","Fold a napkin by each plate","Put a cup at each seat"]},{"id":"c4","emoji":"🧺","name":"Put away laundry","price":0.25,"steps":["Sort clothes into piles (shirts, pants, socks, PJs)","Match up socks","Fold shirts and pants","Put each pile in the right drawer","Hang up anything that goes on a hanger"]},{"id":"c5","emoji":"🐶","name":"Clean up living room","price":0.1,"steps":["Scoop the right amount of food into the bowl","Rinse the water bowl","Fill it with fresh water","Put the food bag away","Wipe up any spills"]},{"id":"c6","emoji":"🗑️","name":"Take out trash","price":0.25,"steps":["Check the bathroom and bedroom trash cans","Empty them into the big trash bag","Tie the big bag closed","Carry it to the outside bin","Put a new bag in the kitchen can"]},{"id":"c7","emoji":"🪴","name":"Help with dishes","price":0.1,"steps":["Fill the watering can","Feel the soil — water it if it’s dry","Pour slowly until the soil is wet","Wipe up any drips","Put the watering can back"]},{"id":"c8","emoji":"🧹","name":"Sweep the floor","price":0.2,"steps":["Move chairs out of the way","Sweep from the edges to the middle","Sweep the pile into the dustpan","Dump it in the trash","Put chairs and broom back"]},{"id":"c9","emoji":"🚗","name":"Help with dinner","price":0.1,"steps":["Fill the bucket with soapy water","Rinse the car with the hose","Scrub with the sponge, top to bottom","Rinse off all the soap","Dry it with a towel"]},{"id":"c10","emoji":"🧽","name":"Wipe the counters","price":0.1,"steps":["Clear things off the counter","Spray the counter","Wipe crumbs into your hand or the sink","Wipe it dry","Put things back neatly"]}],"earned":[],"payouts":[],"addedBathroom":true,"addedDefaultSteps":true};
+  $('recoverBtn').onclick = function () {
+    var m = kidById('millie');
+    if (!m) return;
+    var summary = function (d) {
+      return d.chores.length + ' chores, ' + money(d.earned.reduce(function (a, e) { return a + (e.price || 0); }, 0)) + ' owed';
+    };
+    var choices = [];
+    try {
+      var old = JSON.parse(localStorage.getItem(LEGACY_KEY));
+      if (old && Array.isArray(old.chores) && Array.isArray(old.earned) && Array.isArray(old.payouts)) {
+        choices.push({ label: 'an earlier copy of Millie’s chart saved in this browser', data: old });
+      }
+    } catch (e) {}
+    choices.push({ label: 'the backup you sent on Nov 22', data: MILLIE_NOV22 });
+    for (var i = 0; i < choices.length; i++) {
+      var d = clone(choices[i].data);
+      legacyMigrate(d);
+      if (confirm('Replace Millie’s chores and bank with ' + choices[i].label + ' (' + summary(d) + ')?\n\nWhitaker won’t be changed.' +
+        (i < choices.length - 1 ? '\n\nTap Cancel to see the other option.' : ''))) {
+        var before = { chores: m.chores, earned: m.earned, payouts: m.payouts };
+        m.chores = d.chores; m.earned = d.earned; m.payouts = d.payouts;
+        state = m; root.current = 'millie';
+        save(); render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        toast('Millie’s chart recovered ✅', function () {
+          m.chores = before.chores; m.earned = before.earned; m.payouts = before.payouts; save(); render();
+        });
+        return;
+      }
+    }
+  };
   $('restoreFile').onchange = function () {
     var f = this.files && this.files[0];
     this.value = '';
