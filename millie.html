@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Millie's Chore Chart</title>
+<title>Kids' Chore Chart</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-22-2">
+<meta name="app-version" content="2026-11-22-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -33,7 +33,23 @@
   .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 60px; }
   header { text-align: center; margin: 8px 0 16px; }
   h1 { font-size: 2.2rem; margin: 0; color: var(--purple); line-height: 1.1; }
-  h1 span { color: var(--pink); }
+  h1 .accent { color: var(--pink); }
+  body[data-theme="whitaker"] { --purple: #2563eb; --pink: #0ea5e9; --line: #e0ecfb; --shadow: 0 6px 18px rgba(37, 99, 235, .12); }
+
+  .kids { display: flex; gap: 10px; margin: 0 0 16px; }
+  .kid {
+    flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 18px;
+    background: var(--card); border: 3px solid transparent; box-shadow: var(--shadow); cursor: pointer;
+    font: inherit; color: var(--ink); text-align: left; min-width: 0;
+  }
+  .kid .av {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    color: #fff; font-weight: 800; font-size: 1.3rem;
+  }
+  .kid .kn { display: block; font-weight: 800; font-size: 1.1rem; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kid .ko { display: block; color: var(--muted); font-size: .9rem; }
+  .kid.active { border-color: var(--purple); }
+  .kid:not(.active) { opacity: .75; }
   .sub { color: var(--muted); margin: 4px 0 0; }
 
   .bank {
@@ -101,7 +117,7 @@
   .toast {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px);
     background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 700;
-    transition: transform .3s; z-index: 10; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px);
+    transition: transform .3s; z-index: 10; display: flex; gap: 12px; align-items: center; width: max-content; max-width: calc(100% - 32px);
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast button { background: var(--yellow); color: var(--ink); border: 0; border-radius: 999px; padding: 4px 12px; font: inherit; font-weight: 700; cursor: pointer; }
@@ -178,15 +194,17 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Millie's <span>Chore Chart</span></h1>
+    <h1><span id="kidName">Millie</span>'s <span class="accent">Chore Chart</span></h1>
     <p class="sub">Tap a chore to see what to do, then watch your bank grow!</p>
   </header>
 
+  <nav class="kids" id="kids" aria-label="Choose a child"></nav>
+
   <section class="bank">
-    <div class="label">💰 We owe Millie</div>
+    <div class="label">💰 We owe <span class="kname">Millie</span></div>
     <div class="amount" id="owed">$0.00</div>
     <div class="count" id="count">No chores yet this week</div>
-    <button class="btn btn-pay" id="payBtn">Pay Millie &amp; start new week</button>
+    <button class="btn btn-pay" id="payBtn">Pay <span class="kname">Millie</span> &amp; start new week</button>
   </section>
 
   <h2>Chore Menu <button class="link" id="editToggle">✏️ Edit menu</button></h2>
@@ -208,7 +226,7 @@
 
   <h2>Backup</h2>
   <section class="backup">
-    <p>Your chart is saved on this phone. Save a backup now and then, and before clearing browsing data.</p>
+    <p>Both kids’ charts are saved on this phone. Save a backup now and then, and before clearing browsing data.</p>
     <div class="b-btns">
       <button class="btn btn-backup" id="backupBtn">💾 Save backup</button>
       <button class="btn btn-restore" id="restoreBtn">📂 Restore backup</button>
@@ -234,7 +252,10 @@
 
 <script>
 (function () {
-  var KEY = 'millie-chore-chart-v1';
+  var KEY = 'kids-chore-chart-v2';
+  var LEGACY_KEY = 'millie-chore-chart-v1'; // Millie-only data from before Whitaker was added (left untouched)
+  var clone = function (x) { return JSON.parse(JSON.stringify(x)); };
+  var THEMES = { millie: ['#8b5cf6', '#ff6fa5'], whitaker: ['#2563eb', '#0ea5e9'] };
   var DEFAULT_CHORES = [
     { id: 'c1', emoji: '🛏️', name: 'Make bed', price: 0.50 },
     { id: 'c2', emoji: '🧸', name: 'Clean up toys', price: 0.50 },
@@ -265,25 +286,25 @@
     steps: ['Wipe counters', 'Put toothbrushes away', 'Pick up floor', 'Put toys in basket']
   };
 
-  function load() {
-    try {
-      var s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.chores) return s;
-    } catch (e) {}
-    return { chores: DEFAULT_CHORES.slice(), earned: [], payouts: [] };
-  }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
-  }
+  var WHITAKER_CHORES = [
+    { id: 'w1', emoji: '🧸', name: 'Pick up toys', price: 0.10, steps: ['Put toys in the toy bin', 'Put stuffed animals on the bed', 'Put books on the shelf'] },
+    { id: 'w2', emoji: '🛏️', name: 'Help make bed', price: 0.10, steps: ['Pull up the blanket', 'Put the pillow at the top', 'Put stuffies on the bed'] },
+    { id: 'w3', emoji: '👕', name: 'Dirty clothes in hamper', price: 0.10, steps: ['Pick up clothes from the floor', 'Put them in the hamper'] },
+    { id: 'w4', emoji: '👟', name: 'Put shoes away', price: 0.10, steps: ['Find your shoes', 'Put them in the shoe spot'] },
+    { id: 'w5', emoji: '🧦', name: 'Match socks', price: 0.10, steps: ['Find two socks that look the same', 'Put them together', 'Make a sock pile'] },
+    { id: 'w6', emoji: '🍽️', name: 'Clear your plate', price: 0.10, steps: ['Carry your plate to the counter', 'Carry your cup', 'Throw your napkin in the trash'] },
+    { id: 'w7', emoji: '🥄', name: 'Napkins and spoons', price: 0.10, steps: ['Put a napkin at each seat', 'Put a spoon on each napkin'] },
+    { id: 'w8', emoji: '🧽', name: 'Wipe the table', price: 0.10, steps: ['Get a damp cloth', 'Wipe up crumbs and spills', 'Put the cloth in the sink'] },
+    { id: 'w9', emoji: '🪴', name: 'Water plants', price: 0.10, steps: ['Fill a small cup with water', 'Pour it slowly on the dirt', 'Put the cup back'] }
+  ];
 
-  var state = load();
-  // One-time update: add the bathroom chore with its steps
+  // Older Millie-only data gets these one-time fixes before moving into the new format
+  function legacyMigrate(state) {  // One-time update: add the bathroom chore with its steps
   if (!state.addedBathroom) {
     var bath = state.chores.find(function (c) { return /bathroom/i.test(c.name); });
     if (!bath) state.chores.unshift(JSON.parse(JSON.stringify(BATHROOM)));
     else if (!bath.steps || !bath.steps.length) bath.steps = BATHROOM.steps.slice();
     state.addedBathroom = true;
-    save();
   }
   // One-time update: fill in steps for starter chores that don't have any
   if (!state.addedDefaultSteps) {
@@ -292,7 +313,6 @@
       if (d && !(c.steps && c.steps.length)) c.steps = d.slice();
     });
     state.addedDefaultSteps = true;
-    save();
   }
   // One-time update: renamed chores still had the old chore's emoji and steps.
   // Only fix a chore whose steps are still an unchanged starter list.
@@ -314,8 +334,37 @@
       if (!c.emoji || starterEmoji.indexOf(c.emoji) >= 0) c.emoji = fix[0];
     });
     state.fixedRenamedChores = true;
-    save();
   }
+  }
+
+  function load() {
+    var raw = null, legacy = null;
+    try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    var root = raw && Array.isArray(raw.kids) && raw.kids.length ? raw : null;
+    if (!root) {
+      try { legacy = JSON.parse(localStorage.getItem(LEGACY_KEY)); } catch (e) {}
+      if (!(legacy && Array.isArray(legacy.chores))) legacy = { chores: clone(DEFAULT_CHORES), earned: [], payouts: [] };
+      legacyMigrate(legacy);
+      root = { kids: [{ id: 'millie', name: 'Millie', chores: legacy.chores, earned: legacy.earned || [], payouts: legacy.payouts || [] }], current: 'millie' };
+    }
+    if (!root.addedWhitaker) {
+      if (!root.kids.some(function (k) { return /whitaker/i.test(k.name); })) {
+        root.kids.push({ id: 'whitaker', name: 'Whitaker', chores: clone(WHITAKER_CHORES), earned: [], payouts: [] });
+      }
+      root.addedWhitaker = true;
+    }
+    return root;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(root)); } catch (e) {}
+  }
+  function kidById(id) { return root.kids.find(function (k) { return k.id === id; }); }
+
+  var root = load();
+  var state = kidById(root.current) || root.kids[0];
+  root.current = state.id;
+  save();
+
   var openSteps = {};
   var editing = false;
   var $ = function (id) { return document.getElementById(id); };
@@ -330,7 +379,18 @@
   };
   var total = function () { return state.earned.reduce(function (a, e) { return a + e.price; }, 0); };
 
+  function kidTotal(k) { return k.earned.reduce(function (a, e) { return a + e.price; }, 0); }
   function render() {
+    document.body.setAttribute('data-theme', state.id === 'whitaker' ? 'whitaker' : 'millie');
+    document.title = state.name + "'s Chore Chart";
+    $('kidName').textContent = state.name;
+    Array.prototype.forEach.call(document.querySelectorAll('.kname'), function (el) { el.textContent = state.name; });
+    $('kids').innerHTML = root.kids.map(function (k) {
+      var th = THEMES[k.id] || THEMES.millie;
+      return '<button class="kid' + (k === state ? ' active' : '') + '" data-kid="' + esc(k.id) + '" aria-pressed="' + (k === state) + '">' +
+        '<span class="av" style="background:linear-gradient(135deg,' + th[0] + ',' + th[1] + ')">' + esc(k.name.charAt(0)) + '</span>' +
+        '<span style="min-width:0"><span class="kn">' + esc(k.name) + '</span><span class="ko">' + money(kidTotal(k)) + ' owed</span></span></button>';
+    }).join('');
     var t = total();
     $('owed').textContent = money(t);
     var n = state.earned.length;
@@ -359,8 +419,8 @@
     var nc = state.chores.length;
     $('potential').textContent = money(pot);
     $('potentialSub').textContent = nc
-      ? 'if Millie does all ' + nc + ' chore' + (nc === 1 ? '' : 's') + ' on the menu once'
-      : 'Add chores to the menu to see what Millie could earn';
+      ? 'if ' + state.name + ' does all ' + nc + ' chore' + (nc === 1 ? '' : 's') + ' on the menu once'
+      : 'Add chores to the menu to see what ' + state.name + ' could earn';
 
     $('editToggle').textContent = editing ? '✅ Done editing' : '✏️ Edit menu';
     $('editor').classList.toggle('hidden', !editing);
@@ -496,7 +556,7 @@
   $('payBtn').onclick = function () {
     var t = total();
     if (!state.earned.length) return;
-    if (!confirm('Pay Millie ' + money(t) + ' and start a new week?')) return;
+    if (!confirm('Pay ' + state.name + ' ' + money(t) + ' and start a new week?')) return;
     var payout = { id: uid(), amount: t, count: state.earned.length, at: Date.now(), items: state.earned };
     state.payouts.push(payout);
     state.earned = [];
@@ -509,6 +569,18 @@
   };
 
   $('editToggle').onclick = function () { editing = !editing; render(); };
+
+  $('kids').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.kid');
+    if (!b) return;
+    var k = kidById(b.dataset.kid);
+    if (!k || k === state) return;
+    state = k; root.current = k.id;
+    editing = false;
+    undoFn = null; $('toast').classList.remove('show');
+    save(); render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   $('editor').addEventListener('input', function (ev) {
     var row = ev.target.closest('.row');
@@ -676,12 +748,12 @@
 
   // ---- Backup / restore ----
   $('backupBtn').onclick = function () {
-    var data = JSON.stringify(state, null, 2);
-    var name = 'millie-chores-' + new Date().toISOString().slice(0, 10) + '.json';
+    var data = JSON.stringify(root, null, 2);
+    var name = 'chore-chart-' + new Date().toISOString().slice(0, 10) + '.json';
     try {
       var file = new File([data], name, { type: 'application/json' });
       if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-        navigator.share({ files: [file], title: 'Millie chore chart backup' }).catch(function () {});
+        navigator.share({ files: [file], title: 'Chore chart backup' }).catch(function () {});
         return;
       }
     } catch (e) {}
@@ -701,16 +773,28 @@
     reader.onload = function () {
       var data;
       try { data = JSON.parse(reader.result); } catch (e) { data = null; }
-      if (!data || !Array.isArray(data.chores) || !Array.isArray(data.earned) || !Array.isArray(data.payouts)) {
+      var okKid = function (k) { return k && Array.isArray(k.chores) && Array.isArray(k.earned) && Array.isArray(k.payouts); };
+      var before = clone(root), beforeId = state.id;
+      var undo = function () { root = before; state = kidById(beforeId) || root.kids[0]; save(); render(); };
+      if (data && Array.isArray(data.kids) && data.kids.length && data.kids.every(okKid)) {
+        // Whole-family backup
+        if (!confirm('Replace everything on this phone with this backup (' +
+          data.kids.map(function (k) { return k.name; }).join(' & ') + ')?')) return;
+        root = data;
+        state = kidById(beforeId) || root.kids[0];
+        root.current = state.id;
+      } else if (okKid(data)) {
+        // Older one-child backup: load it into the child being shown
+        if (!confirm('Replace ' + state.name + '’s chores and bank with this backup (' + data.chores.length + ' chores, ' +
+          money(data.earned.reduce(function (a, e) { return a + (e.price || 0); }, 0)) + ' owed)?')) return;
+        legacyMigrate(data);
+        state.chores = data.chores; state.earned = data.earned; state.payouts = data.payouts;
+      } else {
         alert('That file isn’t a chore chart backup.');
         return;
       }
-      if (!confirm('Replace everything on this phone with this backup (' + data.chores.length + ' chores, ' +
-        money(data.earned.reduce(function (a, e) { return a + (e.price || 0); }, 0)) + ' owed)?')) return;
-      var before = state;
-      state = data;
       save(); render();
-      toast('Backup restored ✅', function () { state = before; save(); render(); });
+      toast('Backup restored ✅', undo);
     };
     reader.readAsText(f);
   };
