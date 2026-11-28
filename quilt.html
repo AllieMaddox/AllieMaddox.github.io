@@ -5,18 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>No-Spend Quilt</title>
 <!-- Change app-version on every update so open pages show the "New version" banner -->
-<meta name="app-version" content="2026-11-28-2">
-<meta name="theme-color" content="#efe3cc">
+<meta name="app-version" content="2026-11-28-3">
+<meta name="theme-color" content="#7a2e2e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lora:wght@400;600&family=Satisfy&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #efe3cc;
-    --card: #fbf6ea;
-    --ink: #3d2b1f;
-    --muted: #8a735f;
-    --red: #a63a2f;
-    --navy: #22304f;
+    --bg: #ecdcbf;
+    --card: #fffaf0;
+    --ink: #3b2a20;
+    --muted: #7d6650;
+    --red: #7a2e2e;
+    --hunter: #33503a;
+    --wood: #6b4226;
+    --aida: #f7f0de;
+    --navy: #2c3a57;
     --gold: #d9a441;
     --muslin: #f4ead5;
     --line: #e2d3b7;
@@ -28,36 +31,63 @@
     margin: 0;
     font-family: "Lora", Georgia, serif;
     color: var(--ink);
+    /* country calico wallpaper */
     background-color: var(--bg);
-    /* faint linen weave */
     background-image:
-      repeating-linear-gradient(0deg, rgba(120, 90, 50, .035) 0 1px, transparent 1px 4px),
-      repeating-linear-gradient(90deg, rgba(120, 90, 50, .035) 0 1px, transparent 1px 4px);
+      radial-gradient(circle, var(--red) 1.6px, transparent 2.2px),
+      radial-gradient(circle, var(--hunter) 1.1px, transparent 1.6px),
+      radial-gradient(circle, #d8c29c 1.2px, transparent 1.7px);
+    background-size: 26px 26px, 26px 26px, 13px 13px;
+    background-position: 0 0, 13px 13px, 6px 0;
     -webkit-tap-highlight-color: transparent;
   }
   .wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 70px; }
-  header { text-align: center; margin: 10px 0 18px; }
-  .eyebrow { font-size: .8rem; letter-spacing: .25em; text-transform: uppercase; color: var(--red); margin: 0 0 4px; }
-  h1 { font-family: "Libre Baskerville", Georgia, serif; font-size: 2rem; margin: 0; line-height: 1.15; }
+  /* wooden frame, gingham mat, aida cloth */
+  .frame {
+    padding: 14px; border-radius: 4px;
+    background:
+      repeating-linear-gradient(92deg, rgba(0,0,0,.08) 0 2px, transparent 2px 7px, rgba(255,255,255,.05) 7px 9px, transparent 9px 15px),
+      linear-gradient(135deg, #8a5733, var(--wood) 45%, #54321c);
+    box-shadow: 0 12px 26px rgba(59, 42, 32, .35), inset 0 0 0 2px rgba(255,255,255,.12), inset 0 0 0 5px rgba(0,0,0,.18);
+  }
+  .mat {
+    padding: 10px; background-color: #fff;
+    background-image: linear-gradient(90deg, rgba(122, 46, 46, .55) 50%, transparent 50%), linear-gradient(rgba(122, 46, 46, .55) 50%, transparent 50%);
+    background-size: 12px 12px; box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+  }
+  .sampler {
+    position: relative; text-align: center; padding: 18px 16px 18px;
+    background-color: var(--aida);
+    background-image: repeating-linear-gradient(0deg, rgba(120, 95, 60, .09) 0 1px, transparent 1px 5px), repeating-linear-gradient(90deg, rgba(120, 95, 60, .09) 0 1px, transparent 1px 5px);
+  }
+  .sampler::before { content: ""; position: absolute; inset: 7px; border: 2px dashed rgba(51, 80, 58, .55); pointer-events: none; }
+  header { margin: 8px 0 22px; }
+  .stitch-row { display: flex; justify-content: space-between; align-items: center; padding: 0 6px; }
+  .stitch-row svg, .motif svg { flex: none; display: block; }
+  .eyebrow { font-family: "Satisfy", cursive; font-size: 1.5rem; color: var(--red); margin: 10px 0 0; line-height: 1; }
+  h1 { font-family: "Libre Baskerville", Georgia, serif; font-size: 1.9rem; margin: 4px 0 0; line-height: 1.15; }
   h1 em { color: var(--red); }
-  .sub { color: var(--muted); margin: 6px 0 0; font-style: italic; }
-  h2 { font-family: "Libre Baskerville", Georgia, serif; font-size: 1.2rem; margin: 28px 0 10px; display: flex; align-items: center; gap: 10px; }
-  h2::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+  .sub { color: var(--muted); margin: 6px 0 12px; font-style: italic; font-size: .92rem; }
+  .motif { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 0 0 12px; }
+  h2 { font-family: "Satisfy", cursive; font-weight: 400; color: var(--hunter); font-size: 1.75rem; margin: 26px 0 8px; display: flex; align-items: center; gap: 12px; }
+  h2::before, h2::after { content: ""; flex: 1; border-top: 2px dashed rgba(122, 46, 46, .45); }
 
-  .card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; border: 1px solid var(--line); }
+  /* cards are fabric patches with a stitched edge */
+  .card { position: relative; background: var(--card); border-radius: 6px; box-shadow: 0 2px 0 rgba(59, 42, 32, .15), 0 0 0 1px #e3d3b3, var(--shadow); padding: 18px 16px; }
+  .card::after { content: ""; position: absolute; inset: 5px; border: 1.5px dashed #d2bd96; border-radius: 4px; pointer-events: none; }
 
   /* ---- Today ---- */
   .today { text-align: center; }
   .today .q { font-size: 1.05rem; margin: 0 0 12px; }
-  .btn { font: inherit; border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; font-weight: 600; }
+  .btn { font: inherit; border: 0; border-radius: 8px; padding: 12px 16px; cursor: pointer; font-weight: 600; }
   .btn:active { transform: scale(.98); }
-  .btn-sew { background: var(--red); color: #fff; font-size: 1.1rem; width: 100%; padding: 15px 16px; box-shadow: 0 3px 0 #7a2820; }
+  .btn-sew { background: var(--red); color: #fff; font-size: 1.1rem; width: 100%; padding: 15px 16px; box-shadow: 0 3px 0 #4f1c1c; }
   .btn-sew[disabled] { background: #c9b9a2; box-shadow: none; cursor: default; }
   .btn-soft { background: #efe5d1; color: var(--ink); }
   .btn-navy { background: var(--navy); color: #fff; }
   .done-msg { font-family: "Libre Baskerville", serif; font-size: 1.1rem; margin: 2px 0 4px; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
-  .stat { background: #f3ead8; border-radius: 10px; padding: 8px 4px; border: 1px dashed #d9c7a6; }
+  .stat { border-radius: 4px; padding: 8px 4px; border: 1.5px dashed rgba(51, 80, 58, .45); background-color: #fff; background-image: linear-gradient(90deg, rgba(51, 80, 58, .09) 50%, transparent 50%), linear-gradient(rgba(51, 80, 58, .09) 50%, transparent 50%); background-size: 10px 10px; }
   .stat b { display: block; font-family: "Libre Baskerville", serif; font-size: 1.35rem; }
   .stat span { font-size: .78rem; color: var(--muted); }
 
@@ -105,14 +135,15 @@
   .legend i { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; border-radius: 2px; }
 
   /* ---- Whole quilt ---- */
-  .quilt-frame { background: var(--navy); padding: 5px; border-radius: 6px; box-shadow: var(--shadow); max-width: 520px; margin: 0 auto; }
+  .quilt-frame { max-width: 520px; margin: 0 auto; }
+  .quilt-frame .inner { background: var(--navy); padding: 5px; }
   .quilt-border { padding: 10px; position: relative; }
   .quilt-border::after { content: ""; position: absolute; inset: 4px; border: 1px dashed rgba(255,255,255,.45); pointer-events: none; }
   .quilt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px; position: relative; }
   .mini { cursor: pointer; border: 0; padding: 0; background: var(--muslin); outline: 1px dashed rgba(255, 245, 225, .6); outline-offset: 2px; }
   .mini.selected { outline: 2px solid var(--gold); outline-offset: 3px; }
   .mini .patch.open { box-shadow: inset 0 0 0 .5px #e0d2b6; }
-  .quilt-caption { text-align: center; color: var(--muted); font-size: .9rem; margin: 10px 0 0; font-style: italic; }
+  .quilt-caption { text-align: center; color: var(--muted); font-size: .88rem; margin: 12px auto 0; font-style: italic; background: var(--card); border: 1.5px dashed #d2bd96; border-radius: 6px; padding: 6px 12px; width: fit-content; max-width: 100%; }
   .row-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
 
   /* ---- Skipped list ---- */
@@ -169,11 +200,14 @@
 <div id="banner" class="banner hidden"><span id="bannerMsg"></span><button id="bannerBtn" class="hidden"></button></div>
 
 <div class="wrap">
-  <header>
-    <p class="eyebrow" id="yearEyebrow">My 2027 resolution</p>
+  <header class="frame"><div class="mat"><div class="sampler">
+    <div class="stitch-row" id="topRow" aria-hidden="true"></div>
+    <p class="eyebrow" id="yearEyebrow">My 2027 Resolution</p>
     <h1>The No-Spend <em>Quilt</em></h1>
     <p class="sub">One patch for every day I don’t buy something I don’t need.</p>
-  </header>
+    <div class="motif" id="motif" aria-hidden="true"></div>
+    <div class="stitch-row" id="bottomRow" aria-hidden="true"></div>
+  </div></div></header>
 
   <div id="notice" class="notice hidden"></div>
 
@@ -194,11 +228,11 @@
   </section>
 
   <h2>The whole quilt</h2>
-  <div class="quilt-frame">
+  <div class="quilt-frame frame"><div class="inner">
     <div class="quilt-border" id="quiltBorder">
       <div class="quilt" id="quilt"></div>
     </div>
-  </div>
+  </div></div>
   <p class="quilt-caption" id="quiltCaption"></p>
   <div class="row-btns">
     <button class="btn btn-soft" id="previewBtn">Peek at the finished quilt</button>
@@ -699,6 +733,33 @@
     reader.readAsText(f);
     this.value = '';
   };
+
+  // ---------- Cross-stitch header ----------
+  var STITCH = { R: '#7a2e2e', G: '#33503a', N: '#2c3a57', Y: '#c9973a', B: '#6b4226' };
+  var ART = {
+    heart: ['.RR.RR.', 'RRRRRRR', 'RRRRRRR', '.RRRRR.', '..RRR..', '...R...'],
+    heartG: ['.GG.GG.', 'GGGGGGG', 'GGGGGGG', '.GGGGG.', '..GGG..', '...G...'],
+    dot: ['......', '......', '..YY..', '..YY..', '......', '......'],
+    spool: ['BBBBBBB', '.RRRRR.', '.RRRRR.', '.RRRRR.', '.RRRRR.', 'BBBBBBB'],
+    block: ['RR.YRR', 'R.YY.R', '.YRRY.', 'YRRRRY', 'R.YY.R', 'RR.YRR'],
+    needle: ['......Y', '.....N.', '....N..', '...N...', '..N....', '.N.....', 'N......'],
+    tulip: ['R.R.R', 'RRRRR', '.RRR.', '..G..', 'G.G.G', '.GGG.', '..G..']
+  };
+  function stitch(name, size) {
+    var rows = ART[name], w = rows[0].length, h = rows.length, out = '<svg width="' + w * size + '" height="' + h * size + '" viewBox="0 0 ' + w + ' ' + h + '">';
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var col = STITCH[rows[y][x]];
+      if (col) out += '<path d="M' + (x + .12) + ' ' + (y + .12) + 'L' + (x + .88) + ' ' + (y + .88) + 'M' + (x + .88) + ' ' + (y + .12) + 'L' + (x + .12) + ' ' + (y + .88) + '" stroke="' + col + '" stroke-width=".34" stroke-linecap="round"/>';
+    }
+    return out + '</svg>';
+  }
+  function stitchRow(id) {
+    var h = '';
+    for (var i = 0; i < 9; i++) h += stitch(i % 2 ? 'dot' : (i % 4 ? 'heartG' : 'heart'), 3.2);
+    $(id).innerHTML = h;
+  }
+  stitchRow('topRow'); stitchRow('bottomRow');
+  $('motif').innerHTML = stitch('tulip', 4.5) + stitch('spool', 5) + stitch('block', 6) + stitch('needle', 4.5) + stitch('tulip', 4.5);
 
   render();
 })();
