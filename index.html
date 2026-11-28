@@ -1,12 +1,210 @@
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
- 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allie Maddox</title>
+<meta name="theme-color" content="#7a2e2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Satisfy&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burgundy: #7a2e2e;
+    --hunter: #33503a;
+    --navy: #2c3a57;
+    --mustard: #c9973a;
+    --cream: #f5ecd7;
+    --aida: #f7f0de;
+    --ink: #3b2a20;
+    --muted: #7d6650;
+    --wood: #6b4226;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Libre Baskerville", Georgia, serif;
+    color: var(--ink);
+    /* country calico wallpaper */
+    background-color: #ecdcbf;
+    background-image:
+      radial-gradient(circle, var(--burgundy) 1.6px, transparent 2.2px),
+      radial-gradient(circle, var(--hunter) 1.1px, transparent 1.6px),
+      radial-gradient(circle, #d8c29c 1.2px, transparent 1.7px);
+    background-size: 26px 26px, 26px 26px, 13px 13px;
+    background-position: 0 0, 13px 13px, 6px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 28px 16px 48px;
+  }
+
+  /* wooden frame */
+  .frame {
+    width: 100%;
+    max-width: 500px;
+    padding: 16px;
+    border-radius: 4px;
+    background:
+      repeating-linear-gradient(92deg, rgba(0,0,0,.08) 0 2px, transparent 2px 7px, rgba(255,255,255,.05) 7px 9px, transparent 9px 15px),
+      linear-gradient(135deg, #8a5733, var(--wood) 45%, #54321c);
+    box-shadow: 0 14px 30px rgba(59, 42, 32, .35), inset 0 0 0 2px rgba(255,255,255,.12), inset 0 0 0 5px rgba(0,0,0,.18);
+  }
+  /* gingham mat */
+  .mat {
+    padding: 12px;
+    background-color: #fff;
+    background-image:
+      linear-gradient(90deg, rgba(122, 46, 46, .55) 50%, transparent 50%),
+      linear-gradient(rgba(122, 46, 46, .55) 50%, transparent 50%);
+    background-size: 12px 12px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+  }
+  /* aida cloth */
+  .sampler {
+    position: relative;
+    background-color: var(--aida);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(120, 95, 60, .09) 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(90deg, rgba(120, 95, 60, .09) 0 1px, transparent 1px 5px);
+    padding: 22px 20px 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
+  .sampler::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 2px dashed rgba(51, 80, 58, .55);
+    pointer-events: none;
+  }
+
+  .stitch-row { display: flex; justify-content: space-between; align-items: center; padding: 0 6px; }
+  .stitch-row svg { flex: none; }
+  .welcome { font-family: "Satisfy", cursive; font-size: 1.7rem; color: var(--burgundy); margin: 14px 0 0; line-height: 1; }
+  h1 { font-size: 2.1rem; margin: 6px 0 4px; letter-spacing: .03em; color: var(--ink); }
+  .tag { margin: 0; color: var(--muted); font-style: italic; font-size: .95rem; }
+  .motif { margin: 18px 0 16px; display: flex; justify-content: center; align-items: flex-end; gap: 10px; }
+
+  .links { display: grid; gap: 12px; margin: 4px 0 0; text-align: left; }
+  .link {
+    display: flex; align-items: center; gap: 14px;
+    text-decoration: none; color: var(--ink);
+    background: #fffaf0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    position: relative;
+    box-shadow: 0 2px 0 rgba(59, 42, 32, .15), 0 0 0 1px #e3d3b3;
+    transition: transform .12s ease;
+  }
+  .link::after { content: ""; position: absolute; inset: 4px; border: 1.5px dashed #d2bd96; border-radius: 4px; pointer-events: none; }
+  .link:active { transform: scale(.98); }
+  .link:hover { box-shadow: 0 3px 0 rgba(59, 42, 32, .2), 0 0 0 1px var(--mustard); }
+  .patch {
+    flex: none; width: 48px; height: 48px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.2);
+  }
+  .patch-gingham {
+    background-color: #fff;
+    background-image: linear-gradient(90deg, rgba(51, 80, 58, .6) 50%, transparent 50%), linear-gradient(rgba(51, 80, 58, .6) 50%, transparent 50%);
+    background-size: 8px 8px;
+  }
+  .patch-calico {
+    background-color: var(--burgundy);
+    background-image: radial-gradient(#f5ecd7 1.1px, transparent 1.6px), radial-gradient(var(--mustard) 1px, transparent 1.5px);
+    background-size: 9px 9px; background-position: 0 0, 4.5px 4.5px;
+  }
+  .patch svg { background: var(--aida); border-radius: 2px; padding: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  .link b { display: block; font-size: .95rem; line-height: 1.3; }
+  .link span.sub { display: block; color: var(--muted); font-size: .85rem; font-style: italic; margin-top: 2px; }
+  .link .arrow { margin-left: auto; color: var(--burgundy); font-size: 1.3rem; }
+
+  .motto { font-family: "Satisfy", cursive; font-size: 1.9rem; color: var(--hunter); margin: 22px 0 2px; line-height: 1.1; }
+  .initials { font-size: .8rem; letter-spacing: .3em; color: var(--burgundy); margin: 6px 0 14px; }
+</style>
+</head>
 <body>
-  <h1>Allie Maddox</h1>
-  <p>Welcome to my website!</p>
-  <p><a href="millie.html">⭐ Millie &amp; Whitaker's Chore Chart</a></p>
-  <p><a href="quilt.html">My No-Spend Quilt</a></p>
-  <img src="https://content.codecademy.com/articles/github-pages-via-web-app/happy-ice-cream.gif" />
+  <div class="frame">
+    <div class="mat">
+      <main class="sampler">
+        <div class="stitch-row" id="topRow" aria-hidden="true"></div>
+
+        <p class="welcome">Welcome to</p>
+        <h1>Allie Maddox</h1>
+        <p class="tag">Come on in and stay a while.</p>
+
+        <div class="motif" id="motif" aria-hidden="true"></div>
+
+        <nav class="links">
+          <a class="link" href="quilt.html">
+            <span class="patch patch-calico"><span data-icon="quiltblock"></span></span>
+            <span><b>My No-Spend Quilt</b><span class="sub">One patch for each no-spend day</span></span>
+            <span class="arrow" aria-hidden="true">›</span>
+          </a>
+          <a class="link" href="millie.html">
+            <span class="patch patch-gingham"><span data-icon="star"></span></span>
+            <span><b>Millie &amp; Whitaker’s Chore Chart</b><span class="sub">Chores and the piggy bank</span></span>
+            <span class="arrow" aria-hidden="true">›</span>
+          </a>
+        </nav>
+
+        <p class="motto">Home Sweet Home</p>
+        <p class="initials" id="initials">A · M · 2026</p>
+        <div class="stitch-row" id="bottomRow" aria-hidden="true"></div>
+      </main>
+    </div>
+  </div>
+
+<script>
+(function () {
+  // Cross-stitch drawings: each letter is one stitch; '.' is bare cloth.
+  var COLORS = { R: '#7a2e2e', G: '#33503a', N: '#2c3a57', Y: '#c9973a', B: '#6b4226', P: '#c9776b' };
+  var ART = {
+    heart: ['.RR.RR.', 'RRRRRRR', 'RRRRRRR', '.RRRRR.', '..RRR..', '...R...'],
+    heartG: ['.GG.GG.', 'GGGGGGG', 'GGGGGGG', '.GGGGG.', '..GGG..', '...G...'],
+    dot: ['......', '......', '..YY..', '..YY..', '......', '......'],
+    house: [
+      '.....R.....',
+      '....RRR....',
+      '...RRRRR...',
+      '..RRRRRRR..',
+      '.RRRRRRRRR.',
+      '..NNNNNNN..',
+      '..NYNNNYN..',
+      '..NNNBNNN..',
+      '..NNNBNNN..'
+    ],
+    tree: ['..G..', '.GGG.', '.GGG.', 'GGGGG', 'GGGGG', '..B..', '..B..'],
+    tulip: ['R.R.R', 'RRRRR', '.RRR.', '..G..', 'G.G.G', '.GGG.', '..G..'],
+    star: ['...Y...', '...Y...', 'YYYYYYY', '.YYYYY.', '..YYY..', '.YY.YY.', 'Y.....Y'],
+    quiltblock: ['RR.YRR', 'R.YY.R', '.YRRY.', 'YRRRRY', 'R.YY.R', 'RR.YRR']
+  };
+  function stitch(name, size) {
+    var rows = ART[name], s = size || 4, w = rows[0].length, h = rows.length;
+    var out = '<svg width="' + w * s + '" height="' + h * s + '" viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var col = COLORS[rows[y][x]];
+      if (!col) continue;
+      // each stitch is a little X, like real cross-stitch
+      out += '<path d="M' + (x + .12) + ' ' + (y + .12) + 'L' + (x + .88) + ' ' + (y + .88) + 'M' + (x + .88) + ' ' + (y + .12) + 'L' + (x + .12) + ' ' + (y + .88) + '" stroke="' + col + '" stroke-width=".34" stroke-linecap="round"/>';
+    }
+    return out + '</svg>';
+  }
+  function row(id) {
+    var html = '';
+    for (var i = 0; i < 9; i++) html += stitch(i % 2 ? 'dot' : (i % 4 ? 'heartG' : 'heart'), 3.4);
+    document.getElementById(id).innerHTML = html;
+  }
+  row('topRow');
+  row('bottomRow');
+  document.getElementById('motif').innerHTML =
+    stitch('tulip', 5) + stitch('tree', 5) + stitch('house', 6) + stitch('tree', 5) + stitch('tulip', 5);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-icon]'), function (el) {
+    el.outerHTML = stitch(el.getAttribute('data-icon'), 4);
+  });
+  document.getElementById('initials').textContent = 'A · M · ' + new Date().getFullYear();
+})();
+</script>
 </body>
- 
 </html>
